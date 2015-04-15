@@ -68,7 +68,7 @@ namespace Microsoft.AspNet.Mvc
             }
 
             logger.LogVerbose(
-                "Selected formatter '{OutputFormatter}' to write the response.", 
+                "Selected output formatter '{OutputFormatter}' to write the response.", 
                 selectedFormatter.GetType().FullName);
 
             if (StatusCode.HasValue)
@@ -88,6 +88,10 @@ namespace Microsoft.AspNet.Mvc
             // or Url path extension mapping). If yes, then ignore content-negotiation and use this content-type.
             if (ContentTypes.Count == 1)
             {
+                logger.LogVerbose(
+                    "Ignoring content-negotiation as content type '{ContentType}' is explicitly set for the response.", 
+                    ContentTypes[0]);
+
                 return SelectFormatterUsingAnyAcceptableContentType(formatterContext,
                                                                     formatters,
                                                                     ContentTypes);
@@ -106,6 +110,8 @@ namespace Microsoft.AspNet.Mvc
                     out requestContentType);
                 if (!sortedAcceptHeaderMediaTypes.Any() && requestContentType == null)
                 {
+                    logger.LogVerbose("No information found on request to perform content-negotiation.");
+
                     return SelectFormatterBasedOnTypeMatch(formatterContext, formatters);
                 }
 
@@ -120,6 +126,11 @@ namespace Microsoft.AspNet.Mvc
                                                                             formatterContext,
                                                                             formatters,
                                                                             sortedAcceptHeaderMediaTypes);
+
+                    if(selectedFormatter == null)
+                    {
+                        logger.LogVerbose("Could not find an output formatter based on request accept header.");
+                    }
                 }
 
                 // 2. No formatter was found based on accept headers, fall back on request Content-Type header.
@@ -313,6 +324,10 @@ namespace Microsoft.AspNet.Mvc
             {
                 formatters = Formatters;
             }
+
+            logger.LogVerbose(
+                "Available output formatters for writing the current response: {OutputFormatters}", 
+                formatters.Select(f => f.GetType().FullName));
 
             return formatters;
         }
